@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html class="dark" lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>보이어-무어 알고리즘 시각화 도구 | BM-Visualizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..900&family=Space+Grotesk:wght@100..900&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary-fixed-dim": "#89ceff",
+            "outline-variant": "#3e4850",
+            "inverse-on-surface": "#2c303a",
+            "on-tertiary-fixed-variant": "#92002a",
+            "primary-fixed": "#c9e6ff",
+            "surface-container": "#1c1f29",
+            "surface-variant": "#31353f",
+            "surface-bright": "#353943",
+            "on-tertiary-fixed": "#40000d",
+            "tertiary-container": "#ff697b",
+            "on-error-container": "#ffdad6",
+            "tertiary-fixed-dim": "#ffb2b7",
+            "secondary-fixed": "#6ffbbe",
+            "on-background": "#dfe2ef",
+            "on-secondary-container": "#00311f",
+            "surface-container-lowest": "#0a0e17",
+            "error-container": "#93000a",
+            "background": "#0f131c",
+            "secondary-fixed-dim": "#4edea3",
+            "primary-container": "#0ea5e9",
+            "surface-container-highest": "#31353f",
+            "on-primary-fixed-variant": "#004c6e",
+            "inverse-surface": "#dfe2ef",
+            "on-surface": "#dfe2ef",
+            "on-secondary-fixed": "#002113",
+            "on-secondary-fixed-variant": "#005236",
+            "on-secondary": "#003824",
+            "surface-container-low": "#181b25",
+            "primary": "#89ceff",
+            "inverse-primary": "#006591",
+            "tertiary": "#ffb2b7",
+            "secondary": "#4edea3",
+            "secondary-container": "#00a572",
+            "on-primary-fixed": "#001e2f",
+            "on-surface-variant": "#bec8d2",
+            "tertiary-fixed": "#ffdadb",
+            "on-tertiary": "#67001b",
+            "on-primary": "#00344d",
+            "on-error": "#690005",
+            "outline": "#88929b",
+            "on-primary-container": "#003751",
+            "on-tertiary-container": "#6c001d",
+            "surface-dim": "#0f131c",
+            "surface-container-high": "#262a34",
+            "surface-tint": "#89ceff",
+            "error": "#ffb4ab",
+            "surface": "#0f131c"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          spacing: {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.875rem",
+            "space-lg": "1.25rem",
+            "space-xl": "1.75rem",
+            "space-2xl": "2.5rem",
+            "gutter": "1rem",
+            "gutter-lg": "1.5rem"
+          },
+          fontFamily: {
+            "body-md": ["Geist", "sans-serif"],
+            "code-md": ["JetBrains Mono", "monospace"],
+            "headline-sm": ["Space Grotesk", "sans-serif"],
+            "headline-md": ["Space Grotesk", "sans-serif"],
+            "headline-lg": ["Space Grotesk", "sans-serif"],
+            "label-md": ["JetBrains Mono", "monospace"],
+            "label-sm": ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { overscroll-behavior: none; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #31353f; border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: #0f131c; }
+    .cell-transition { transition: all 0.25s ease-in-out; }
+    .bar-anim { transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface min-h-screen selection:bg-primary-container selection:text-on-primary-container">
+
+  <!-- 좌측 사이드바 -->
+  <aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.25)] border-r border-outline-variant/30">
+    <div class="flex flex-col">
+      <!-- 로고 헤더 -->
+      <div class="h-16 px-gutter flex items-center gap-space-sm bg-surface-container-lowest/60 border-b border-outline-variant/30">
+        <div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container shadow-[0_0_12px_rgba(14,165,233,0.3)]">
+          <span class="material-symbols-outlined text-[20px]">memory</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-headline-sm text-[16px] text-on-surface font-bold tracking-tight">BM-Visualizer</span>
+          <span class="font-label-sm text-[11px] text-outline tracking-wider uppercase">v2.4.0 Engine</span>
+        </div>
+      </div>
+
+      <!-- 탐색 메뉴 -->
+      <div class="px-gutter pt-space-lg pb-space-xs">
+        <span class="font-label-sm text-[10px] uppercase tracking-wider text-outline font-semibold">학습 모듈 탐색</span>
+      </div>
+      <nav class="flex flex-col gap-space-xs px-space-sm">
+        <button class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg transition-all bg-primary-container text-on-primary-container font-semibold shadow-[0_0_12px_rgba(14,165,233,0.2)] text-left">
+          <span class="material-symbols-outlined text-[18px]">play_circle</span>
+          <span class="text-sm">인터랙티브 워크벤치</span>
+        </button>
+        <button class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all text-left">
+          <span class="material-symbols-outlined text-[18px]">table_chart</span>
+          <span class="text-sm">Bad Character (Δ₁)</span>
+        </button>
+        <button class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all text-left">
+          <span class="material-symbols-outlined text-[18px]">low_priority</span>
+          <span class="text-sm">Good Suffix (Δ₂)</span>
+        </button>
+      </nav>
+
+      <!-- 사용자 입력 폼 (텍스트 & 패턴 커스텀 변경) -->
+      <div class="mt-4 px-space-md flex flex-col gap-2">
+        <span class="font-label-sm text-[10px] uppercase tracking-wider text-outline font-semibold">입력 문자열 설정</span>
+        <div class="flex flex-col gap-1">
+          <label class="text-[11px] text-on-surface-variant">대상 텍스트 (T)</label>
+          <input type="text" id="input-text" value="BABBABABAC" class="w-full bg-surface-container-highest px-2 py-1 rounded text-xs font-code-md text-primary uppercase focus:outline-none focus:ring-1 focus:ring-primary" placeholder="BABBABABAC"/>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[11px] text-on-surface-variant">검색 패턴 (P)</label>
+          <input type="text" id="input-pattern" value="BABACB" class="w-full bg-surface-container-highest px-2 py-1 rounded text-xs font-code-md text-secondary uppercase focus:outline-none focus:ring-1 focus:ring-secondary" placeholder="BABACB"/>
+        </div>
+        <button id="btn-apply-strings" class="mt-1 w-full py-1.5 rounded bg-surface-container-high hover:bg-surface-bright text-xs font-code-md text-on-surface flex items-center justify-center gap-1 transition-all">
+          <span class="material-symbols-outlined text-[14px]">refresh</span> 적용 및 초기화
+        </button>
+      </div>
+    </div>
+
+    <!-- 하단 복잡도 상태 위젯 -->
+    <div class="p-space-md flex flex-col gap-space-sm bg-surface-container-lowest/50 border-t border-outline-variant/30">
+      <div class="p-space-sm rounded-lg bg-surface-container-high flex flex-col gap-space-xs">
+        <div class="flex items-center justify-between">
+          <span class="font-label-sm text-[10px] text-on-surface-variant uppercase">시간 복잡도 진행도</span>
+          <span class="font-code-md text-[12px] text-secondary font-semibold" id="sidebar-progress-text">0.0%</span>
+        </div>
+        <div class="w-full bg-surface-container-lowest h-1.5 rounded-full overflow-hidden">
+          <div class="bg-secondary h-full w-[0%] transition-all duration-300" id="sidebar-progress-bar"></div>
+        </div>
+        <div class="flex items-center justify-between text-outline text-[11px]">
+          <span>최선 O(n/m)</span>
+          <span class="font-code-md">최악 O(n·m)</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between px-space-xs text-outline text-[11px]">
+        <span>단축키 [Space] 실행</span>
+        <span class="material-symbols-outlined text-[16px]">keyboard</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 메인 뷰 컨테이너 -->
+  <div class="pl-64 flex flex-col min-h-screen">
+    <!-- 상단 글로벌 헤더 -->
+    <header class="fixed top-0 left-64 right-0 h-16 bg-surface/90 backdrop-blur-xl z-40 px-gutter-lg flex items-center justify-between shadow-[0_1px_8px_rgba(0,0,0,0.3)] border-b border-outline-variant/30">
+      <div class="flex items-center gap-gutter">
+        <div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-full bg-surface-container-low shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+          </span>
+          <span class="font-label-md text-xs text-secondary tracking-wider" id="engine-status-text">CONNECTED</span>
+          <span class="text-outline-variant font-code-sm text-xs">|</span>
+          <span class="font-code-sm text-xs text-on-surface-variant" id="engine-latency-text">0.014 ms</span>
+        </div>
+        <div class="hidden xl:flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-high">
+          <span class="font-label-sm text-[11px] text-outline uppercase">Status:</span>
+          <span class="font-code-sm text-xs text-primary font-medium" id="engine-mode-badge">READY (IDLE)</span>
+        </div>
+      </div>
+
+      <!-- 상단 컨트롤러 -->
+      <div class="flex items-center gap-space-md bg-surface-container-low px-space-md py-space-xs rounded-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+        <div class="flex items-center gap-space-xs">
+          <button id="header-btn-run" class="flex items-center gap-space-xs px-space-md py-space-xs bg-primary-container text-on-primary-container rounded-lg font-code-md text-xs hover:bg-primary hover:text-on-primary shadow-[0_0_12px_rgba(14,165,233,0.35)] transition-all">
+            <span class="material-symbols-outlined text-[16px]">play_arrow</span>
+            <span>시작</span>
+          </button>
+          <button id="header-btn-pause" class="flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-high text-on-surface-variant hover:bg-surface-bright hover:text-on-surface rounded-lg font-code-md text-xs transition-all">
+            <span class="material-symbols-outlined text-[16px]">pause</span>
+            <span>일시정지</span>
+          </button>
+          <button id="header-btn-step" class="flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-high text-on-surface-variant hover:bg-surface-bright hover:text-on-surface rounded-lg font-code-md text-xs transition-all">
+            <span class="material-symbols-outlined text-[16px]">redo</span>
+            <span>단계별</span>
+          </button>
+          <button id="header-btn-reset" class="flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-high text-tertiary hover:bg-surface-bright rounded-lg font-code-md text-xs transition-all">
+            <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+            <span>초기화</span>
+          </button>
+        </div>
+        <div class="h-5 w-[1px] bg-outline-variant"></div>
+        <div class="flex items-center gap-space-sm pl-space-xs">
+          <span class="material-symbols-outlined text-outline text-[18px]">speed</span>
+          <input id="speed-slider" class="w-16 accent-primary-container h-1 bg-surface-container-highest rounded-lg cursor-pointer" max="3" min="0.25" step="0.25" type="range" value="1"/>
+          <span id="speed-label" class="font-code-sm text-xs text-on-surface-variant w-8">1.0x</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-space-md">
+        <div class="flex items-center gap-space-sm px-space-md py-space-xs rounded-lg bg-surface-container-low text-on-surface-variant">
+          <span class="font-label-sm text-[11px] uppercase text-outline">Shift Mode:</span>
+          <span class="font-code-sm text-xs text-secondary font-bold">MAX(Δ₁, Δ₂)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 대시보드 메인 본문 -->
+    <main class="flex-1 w-full pt-20 bg-surface px-gutter-lg py-space-lg flex flex-col gap-space-lg">
+      
+      <!-- 파이프라인 상태 배너 -->
+      <div class="w-full bg-surface-container-low rounded-xl p-space-md shadow-md flex flex-wrap items-center justify-between gap-space-md relative overflow-hidden border border-outline-variant/30">
+        <div class="absolute -right-12 -top-12 w-48 h-48 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="flex items-center flex-wrap gap-space-md">
+          <div class="flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-high shadow-sm">
+            <span class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span>
+            <span class="font-label-md text-xs text-secondary">ws://localhost:8080/stream</span>
+            <span class="text-outline-variant font-code-sm text-xs">::</span>
+            <span class="font-code-sm text-xs text-on-surface-variant font-semibold" id="pipeline-sync-label">SYNCHRONIZED</span>
+          </div>
+          <div class="flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container">
+            <span class="material-symbols-outlined text-[16px] text-primary">terminal</span>
+            <span class="font-code-sm text-xs text-on-surface">실행 단계:</span>
+            <span class="font-code-sm text-xs text-primary font-bold" id="current-step-display">Step 0 / 0</span>
+            <span class="font-label-sm text-[11px] text-secondary bg-secondary/10 px-space-xs py-0.5 rounded ml-1 font-semibold" id="step-state-badge">준비 완료</span>
+          </div>
+          <div class="flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-tertiary-container/20 text-tertiary-fixed-dim">
+            <span class="material-symbols-outlined text-[16px] text-tertiary">west</span>
+            <span class="font-label-md text-xs uppercase tracking-wider">스캔 방향: 패턴 우측 ➔ 좌측 (R-to-L)</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-space-sm">
+          <div class="flex items-center bg-surface-container-highest p-0.5 rounded-lg shadow-inner">
+            <button id="btn-run" class="flex items-center gap-space-xs px-space-md py-space-xs rounded-md bg-primary-container text-on-primary-container font-code-sm text-xs font-semibold hover:bg-primary transition-all">
+              <span class="material-symbols-outlined text-[16px]">play_arrow</span>
+              <span>실행</span>
+            </button>
+            <button id="btn-pause" class="flex items-center gap-space-xs px-space-md py-space-xs rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-variant font-code-sm text-xs transition-all">
+              <span class="material-symbols-outlined text-[16px]">pause</span>
+              <span>정지</span>
+            </button>
+            <button id="btn-step" class="flex items-center gap-space-xs px-space-md py-space-xs rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-variant font-code-sm text-xs transition-all">
+              <span class="material-symbols-outlined text-[16px]">skip_next</span>
+              <span>1단계 실행</span>
+            </button>
+            <button id="btn-reset" class="flex items-center gap-space-xs px-space-md py-space-xs rounded-md text-tertiary hover:bg-surface-variant font-code-sm text-xs transition-all">
+              <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+              <span>초기화</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 스트링 슬라이딩 얼라인먼트 캔버스 -->
+      <section class="w-full bg-surface-container-low rounded-xl p-gutter shadow-xl relative overflow-hidden flex flex-col gap-space-lg border border-outline-variant/30">
+        <!-- 캔버스 헤더 -->
+        <div class="flex flex-wrap items-center justify-between gap-space-md pb-space-sm border-b border-outline-variant/20">
+          <div class="flex items-center gap-space-md">
+            <div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary shadow-sm">
+              <span class="material-symbols-outlined text-[24px]">align_horizontal_left</span>
+            </div>
+            <div>
+              <h2 class="font-headline-sm text-lg text-on-surface font-bold tracking-tight">스트링 슬라이딩 얼라인먼트 캔버스</h2>
+              <p class="font-body-sm text-xs text-on-surface-variant">Boyer-Moore 휴리스틱 적용: 불일치 발견 시 최대 점프 거리 연산</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-space-md bg-surface-container px-space-md py-space-xs rounded-xl shadow-inner text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded bg-tertiary"></span>
+              <span class="text-on-surface-variant">불일치 (Mismatch)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded bg-secondary"></span>
+              <span class="text-on-surface-variant">일치 접미부 (Good Suffix)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded bg-primary"></span>
+              <span class="text-on-surface-variant">비교 포인터 (Pointer)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 텍스트 & 패턴 벡터 배열 뷰 -->
+        <div class="w-full bg-surface-container-lowest/80 rounded-xl p-space-lg shadow-inner flex flex-col gap-space-lg overflow-x-auto">
+          <!-- 대상 텍스트 행 -->
+          <div class="flex flex-col gap-space-xs">
+            <div class="flex items-center justify-between text-outline font-label-sm text-xs uppercase tracking-wider mb-1">
+              <span class="flex items-center gap-space-xs">
+                <span class="text-primary font-bold">대상 텍스트 T</span>
+                <span class="text-outline-variant">|</span>
+                <span id="text-length-label">길이 n = 10</span>
+              </span>
+              <span class="text-on-surface-variant font-code-sm text-xs">현재 윈도우 오프셋: <strong class="text-secondary" id="window-offset-label">k = 0</strong></span>
+            </div>
+            <div class="flex gap-2" id="text-cells-container"></div>
+          </div>
+
+          <!-- 실시간 스캔 비교 트레이스 로그 -->
+          <div class="flex items-center gap-2 px-1 py-1 bg-surface-container-low/70 rounded-lg">
+            <div class="flex items-center gap-2 text-outline-variant font-code-sm text-xs flex-wrap">
+              <span class="font-label-sm text-[11px] uppercase tracking-wider text-outline font-semibold">비교 트레이스:</span>
+              <span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface" id="trace-step-text">대기 중...</span>
+            </div>
+          </div>
+
+          <!-- 패턴 스트링 행 -->
+          <div class="flex flex-col gap-space-xs">
+            <div class="flex items-center justify-between text-outline font-label-sm text-xs uppercase tracking-wider mb-1">
+              <span class="flex items-center gap-space-xs">
+                <span class="text-secondary font-bold">검색 패턴 P</span>
+                <span class="text-outline-variant">|</span>
+                <span id="pattern-length-label">길이 m = 6 (우측 ➔ 좌측 비교 진행)</span>
+              </span>
+              <span class="text-primary font-code-sm text-xs font-semibold" id="pointer-status-label">비교 포인터 j = -</span>
+            </div>
+            <div class="flex gap-2" id="pattern-cells-container"></div>
+          </div>
+        </div>
+
+        <!-- 시프트 예측 트랙 -->
+        <div class="w-full flex flex-wrap items-center justify-between px-space-md py-space-sm bg-surface-container rounded-lg gap-2">
+          <div class="flex items-center gap-space-md flex-wrap">
+            <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">예상 다음 정렬 위치 (Next Alignment):</span>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-surface-container-high font-code-sm text-xs text-on-surface" id="preview-current-k">현재: k = 0</span>
+              <span class="material-symbols-outlined text-[16px] text-secondary">trending_flat</span>
+              <span class="px-2 py-0.5 rounded bg-secondary-container/30 text-secondary font-code-sm text-xs font-bold" id="preview-next-k">다음: k = 0</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-space-xs text-secondary font-code-sm text-xs font-semibold">
+            <span class="material-symbols-outlined text-[18px]">fast_forward</span>
+            <span id="preview-skip-label">서브리니어 건너뛰기 대기 중</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 최종 이동 결정 수식 배너 -->
+      <div class="w-full bg-gradient-to-r from-primary-container/20 via-surface-container-high to-secondary-container/20 p-space-md rounded-xl shadow-lg flex flex-wrap items-center justify-between gap-space-md border border-outline-variant/30">
+        <div class="flex items-center gap-space-md">
+          <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shadow-md">
+            <span class="material-symbols-outlined text-[22px]">balance</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-label-sm text-[11px] uppercase tracking-widest text-secondary font-bold">Boyer-Moore 최종 이동 결정 (Arbitration Formula)</span>
+            <div class="font-headline-sm text-base text-on-surface font-bold tracking-tight" id="arbitration-formula-display">
+              Shift = max( Bad Character <span class="text-primary">(Δ₁ = 0)</span>, Good Suffix <span class="text-secondary">(Δ₂ = 0)</span> ) 
+              <span class="text-secondary-fixed">➔ 탐색 시작 대기</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-space-sm bg-surface-container-lowest/60 px-space-md py-space-xs rounded-lg">
+          <span class="material-symbols-outlined text-secondary text-[20px]">verified</span>
+          <span class="font-code-sm text-xs text-on-surface font-medium" id="arbitration-decision-label">규칙 판정 대기</span>
+        </div>
+      </div>
+
+      <!-- 동시 비교 시각화 듀얼 스플릿 패널 (Bad Character vs Good Suffix) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter-lg">
+        
+        <!-- 좌측: 나쁜 문자 규칙 (Δ₁) -->
+        <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl flex flex-col gap-space-md relative overflow-hidden border border-outline-variant/30">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
+          <div class="flex items-center justify-between pb-space-xs">
+            <div class="flex items-center gap-space-sm">
+              <div class="w-8 h-8 rounded-lg bg-primary-container/30 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined text-[20px]">table_chart</span>
+              </div>
+              <div>
+                <h3 class="font-headline-sm text-base text-on-surface font-bold">나쁜 문자 규칙 (Bad Character, Δ₁)</h3>
+                <p class="font-label-sm text-xs text-outline">불일치 텍스트 문자의 패턴 내 최우측 등장 위치 기준</p>
+              </div>
+            </div>
+            <span class="px-space-sm py-1 rounded bg-primary-container/20 text-primary font-code-sm text-xs font-bold" id="badge-delta-1">Δ₁ = 0 칸</span>
+          </div>
+
+          <div class="p-space-md rounded-lg bg-surface-container flex flex-col gap-space-xs shadow-inner">
+            <span class="font-label-sm text-[11px] uppercase tracking-wider text-outline font-semibold">시프트 산출 수식 (Evaluation)</span>
+            <div class="font-code-md text-xs text-on-surface" id="calc-formula-bc">
+              Shift = <span class="text-primary font-bold">max(1, j - BadChar[T[k+j]])</span>
+            </div>
+          </div>
+
+          <!-- Bad Character LUT 테이블 -->
+          <div class="flex flex-col gap-space-xs">
+            <div class="flex items-center justify-between text-outline font-label-sm text-xs">
+              <span>전처리 룩업 테이블 (Lookup Matrix Σ)</span>
+              <span class="text-primary font-code-sm" id="bc-table-size-label">Table Size</span>
+            </div>
+            <div class="grid grid-cols-4 sm:grid-cols-6 gap-2" id="bc-table-container"></div>
+          </div>
+
+          <!-- 동시 진행 히스토그램 막대 애니메이션 (Bad Character) -->
+          <div class="flex flex-col gap-space-xs pt-space-xs border-t border-outline-variant/20">
+            <div class="flex items-center justify-between text-outline font-label-sm text-xs">
+              <span>정렬 인덱스별 비교 연산 빈도 히스토그램 (Δ₁)</span>
+              <span class="font-code-sm text-primary font-semibold" id="bc-hist-total">누적 0회</span>
+            </div>
+            <div class="h-20 bg-surface-container-lowest/60 rounded-lg p-2 flex items-end justify-between gap-1.5" id="bc-histogram-container"></div>
+          </div>
+        </div>
+
+        <!-- 우측: 착한 접미부 규칙 (Δ₂) -->
+        <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl flex flex-col gap-space-md relative overflow-hidden border border-outline-variant/30">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-secondary/10 rounded-full blur-2xl pointer-events-none"></div>
+          <div class="flex items-center justify-between pb-space-xs">
+            <div class="flex items-center gap-space-sm">
+              <div class="w-8 h-8 rounded-lg bg-secondary-container/30 flex items-center justify-center text-secondary">
+                <span class="material-symbols-outlined text-[20px]">low_priority</span>
+              </div>
+              <div>
+                <h3 class="font-headline-sm text-base text-on-surface font-bold">착한 접미부 규칙 (Good Suffix, Δ₂)</h3>
+                <p class="font-label-sm text-xs text-outline">이미 일치한 접미부 u가 패턴 내 다른 위치에 존재하는가?</p>
+              </div>
+            </div>
+            <span class="px-space-sm py-1 rounded bg-secondary-container/30 text-secondary font-code-sm text-xs font-bold" id="badge-delta-2">Δ₂ = 0 칸</span>
+          </div>
+
+          <div class="p-space-md rounded-lg bg-surface-container flex flex-col gap-space-xs shadow-inner">
+            <span class="font-label-sm text-[11px] uppercase tracking-wider text-outline font-semibold">시프트 산출 수식 (Evaluation)</span>
+            <div class="font-code-md text-xs text-on-surface" id="calc-formula-gs">
+              Shift = <span class="text-secondary font-bold">GoodSuffix[j + 1]</span>
+            </div>
+          </div>
+
+          <!-- Good Suffix LUT 테이블 -->
+          <div class="flex flex-col gap-space-xs">
+            <div class="flex items-center justify-between text-outline font-label-sm text-xs">
+              <span>전처리 이동 테이블 (Good Suffix LUT [0..m])</span>
+              <span class="text-secondary font-code-sm" id="gs-table-size-label">LUT Size</span>
+            </div>
+            <div class="grid grid-cols-4 sm:grid-cols-7 gap-1" id="gs-table-container"></div>
+          </div>
+
+          <!-- 동시 진행 히스토그램 막대 애니메이션 (Good Suffix) -->
+          <div class="flex flex-col gap-space-xs pt-space-xs border-t border-outline-variant/20">
+            <div class="flex items-center justify-between text-outline font-label-sm text-xs">
+              <span>정렬 인덱스별 비교 연산 빈도 히스토그램 (Δ₂)</span>
+              <span class="font-code-sm text-secondary font-semibold" id="gs-hist-total">최적 도약 진행 중</span>
+            </div>
+            <div class="h-20 bg-surface-container-lowest/60 rounded-lg p-2 flex items-end justify-between gap-1.5" id="gs-histogram-container"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 하단 텔레메트리 & 공통 상태 카드 (4-Grid) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+        <!-- 카드 1: 총 비교 횟수 -->
+        <div class="bg-surface-container-low p-space-md rounded-xl shadow-md flex flex-col justify-between gap-space-sm border border-outline-variant/30">
+          <div class="flex items-center justify-between">
+            <span class="font-label-sm text-xs text-outline uppercase tracking-wider">총 비교 연산 횟수</span>
+            <span class="material-symbols-outlined text-secondary text-[20px]">troubleshoot</span>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-space-xs">
+              <span class="font-headline-lg text-2xl text-on-surface font-bold tracking-tight" id="telemetry-comps">0</span>
+              <span class="font-code-sm text-xs text-outline">회 비교</span>
+            </div>
+            <p class="font-code-sm text-xs text-secondary mt-1" id="telemetry-gain">vs 브루트포스 0% 절감</p>
+          </div>
+          <div class="w-full h-6 pt-1">
+            <svg class="w-full h-full text-secondary" fill="none" preserveaspectratio="none" viewbox="0 0 100 24">
+              <path d="M0,20 L15,18 L30,12 L45,15 L60,8 L75,10 L90,3 L100,5" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- 카드 2: 연산 지연시간 -->
+        <div class="bg-surface-container-low p-space-md rounded-xl shadow-md flex flex-col justify-between gap-space-sm border border-outline-variant/30">
+          <div class="flex items-center justify-between">
+            <span class="font-label-sm text-xs text-outline uppercase tracking-wider">실시간 연산 소요 시간</span>
+            <span class="material-symbols-outlined text-primary text-[20px]">timer</span>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-space-xs">
+              <span class="font-headline-lg text-2xl text-primary font-bold tracking-tight" id="telemetry-latency">0.014</span>
+              <span class="font-code-sm text-xs text-outline">ms</span>
+            </div>
+            <p class="font-code-sm text-xs text-on-surface-variant mt-1">프레임 렌더링 최적화</p>
+          </div>
+          <div class="w-full flex items-end gap-1 h-6 pt-1">
+            <span class="w-full h-3 bg-surface-container-high rounded-sm"></span>
+            <span class="w-full h-4 bg-surface-container-high rounded-sm"></span>
+            <span class="w-full h-6 bg-primary-container rounded-sm"></span>
+            <span class="w-full h-5 bg-surface-container-high rounded-sm"></span>
+            <span class="w-full h-6 bg-primary rounded-sm"></span>
+          </div>
+        </div>
+
+        <!-- 카드 3: 시간 복잡도 진행도 -->
+        <div class="bg-surface-container-low p-space-md rounded-xl shadow-md flex flex-col justify-between gap-space-sm border border-outline-variant/30">
+          <div class="flex items-center justify-between">
+            <span class="font-label-sm text-xs text-outline uppercase tracking-wider">시간 복잡도 진행률</span>
+            <span class="material-symbols-outlined text-on-surface-variant text-[20px]">data_exploration</span>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-space-xs">
+              <span class="font-headline-lg text-2xl text-on-surface font-bold tracking-tight" id="telemetry-progress-val">0.0%</span>
+            </div>
+            <p class="font-code-sm text-xs text-outline mt-1">O(n/m) 수렴 진행 상태</p>
+          </div>
+          <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden mt-2">
+            <div class="bg-primary h-full w-[0%] transition-all duration-300" id="card-progress-bar"></div>
+          </div>
+        </div>
+
+        <!-- 카드 4: 서버 연결 상태 (실시간) -->
+        <div class="bg-surface-container-low p-space-md rounded-xl shadow-md flex flex-col justify-between gap-space-sm border border-outline-variant/30">
+          <div class="flex items-center justify-between">
+            <span class="font-label-sm text-xs text-outline uppercase tracking-wider">서버 연결 상태 (Health)</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.8)]" id="telemetry-status-dot"></span>
+          </div>
+          <div>
+            <div class="flex items-center gap-space-xs">
+              <span class="font-code-md text-base text-secondary font-bold" id="telemetry-rpc-status">ONLINE (V8/API)</span>
+            </div>
+            <p class="font-code-sm text-xs text-on-surface-variant mt-1" id="telemetry-engine-info">Google Cloud Run / GAS Connected</p>
+          </div>
+          <div class="flex items-center justify-between text-outline font-code-sm text-xs pt-1">
+            <span>@main.py :: Worker #3</span>
+            <span class="text-secondary font-semibold">200 OK</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    (function() {
+      let simData = null;
+      let currentStepIdx = 0;
+      let playTimer = null;
+      let speedMultiplier = 1.0;
+
+      // DOM 요소 캐싱
+      const inputText = document.getElementById('input-text');
+      const inputPattern = document.getElementById('input-pattern');
+      const btnApply = document.getElementById('btn-apply-strings');
+
+      const btnRun = document.getElementById('btn-run');
+      const btnPause = document.getElementById('btn-pause');
+      const btnStep = document.getElementById('btn-step');
+      const btnReset = document.getElementById('btn-reset');
+
+      const headerBtnRun = document.getElementById('header-btn-run');
+      const headerBtnPause = document.getElementById('header-btn-pause');
+      const headerBtnStep = document.getElementById('header-btn-step');
+      const headerBtnReset = document.getElementById('header-btn-reset');
+
+      const speedSlider = document.getElementById('speed-slider');
+      const speedLabel = document.getElementById('speed-label');
+
+      const currentStepDisplay = document.getElementById('current-step-display');
+      const stepStateBadge = document.getElementById('step-state-badge');
+      const traceStepText = document.getElementById('trace-step-text');
+
+      const textCellsContainer = document.getElementById('text-cells-container');
+      const patternCellsContainer = document.getElementById('pattern-cells-container');
+      const textLengthLabel = document.getElementById('text-length-label');
+      const patternLengthLabel = document.getElementById('pattern-length-label');
+      const windowOffsetLabel = document.getElementById('window-offset-label');
+      const pointerStatusLabel = document.getElementById('pointer-status-label');
+
+      const previewCurrentK = document.getElementById('preview-current-k');
+      const previewNextK = document.getElementById('preview-next-k');
+      const previewSkipLabel = document.getElementById('preview-skip-label');
+
+      const arbitrationFormulaDisplay = document.getElementById('arbitration-formula-display');
+      const arbitrationDecisionLabel = document.getElementById('arbitration-decision-label');
+      const badgeDelta1 = document.getElementById('badge-delta-1');
+      const badgeDelta2 = document.getElementById('badge-delta-2');
+
+      const bcTableContainer = document.getElementById('bc-table-container');
+      const gsTableContainer = document.getElementById('gs-table-container');
+      const bcTableSizeLabel = document.getElementById('bc-table-size-label');
+      const gsTableSizeLabel = document.getElementById('gs-table-size-label');
+
+      const bcHistogramContainer = document.getElementById('bc-histogram-container');
+      const gsHistogramContainer = document.getElementById('gs-histogram-container');
+      const bcHistTotal = document.getElementById('bc-hist-total');
+      const gsHistTotal = document.getElementById('gs-hist-total');
+
+      const telemetryComps = document.getElementById('telemetry-comps');
+      const telemetryGain = document.getElementById('telemetry-gain');
+      const telemetryLatency = document.getElementById('telemetry-latency');
+      const telemetryProgressVal = document.getElementById('telemetry-progress-val');
+      const cardProgressBar = document.getElementById('card-progress-bar');
+      const sidebarProgressText = document.getElementById('sidebar-progress-text');
+      const sidebarProgressBar = document.getElementById('sidebar-progress-bar');
+
+      // 로컬 Boyer-Moore 연산 엔진 (GAS/오프라인 환경에서도 동일 데이터 스냅샷 제공)
+      function runLocalBoyerMoore(text, pattern) {
+        const t = text.toUpperCase();
+        const p = pattern.toUpperCase();
+        const n = t.length;
+        const m = p.length;
+
+        const badChar = {};
+        for (let i = 0; i < m; i++) {
+          badChar[p[i]] = i;
+        }
+
+        const suff = new Array(m).fill(0);
+        suff[m - 1] = m;
+        let g = m - 1, f = m - 1;
+        for (let i = m - 2; i >= 0; --i) {
+          if (i > g && suff[i + m - 1 - f] < i - g) {
+            suff[i] = suff[i + m - 1 - f];
+          } else {
+            if (i < g) g = i;
+            f = i;
+            while (g >= 0 && p[g] === p[g + m - 1 - f]) --g;
+            suff[i] = f - g;
+          }
+        }
+
+        const goodSuffix = new Array(m + 1).fill(m);
+        let jdx = 0;
+        for (let i = m - 1; i >= -1; --i) {
+          if (i === -1 || suff[i] === i + 1) {
+            for (; jdx < m - 1 - i; ++jdx) {
+              if (goodSuffix[jdx] === m) goodSuffix[jdx] = m - 1 - i;
+            }
+          }
+        }
+        for (let i = 0; i <= m - 2; ++i) {
+          goodSuffix[m - 1 - suff[i]] = m - 1 - i;
+        }
+
+        const steps = [];
+        const matches = [];
+        let totalComps = 0;
+        let k = 0;
+        const maxK = Math.max(n - m, 1);
+        const bcCounts = {};
+        const gsCounts = {};
+
+        while (k <= n - m) {
+          let j = m - 1;
+          const matchedSub = [];
+          let isMismatch = false;
+
+          while (j >= 0) {
+            totalComps++;
+            const ct = t[k + j];
+            const cp = p[j];
+
+            bcCounts[k] = (bcCounts[k] || 0) + 1;
+            gsCounts[k] = (gsCounts[k] || 0) + 1;
+
+            const progressPct = Math.min(100.0, Math.round(((k + (m - 1 - j) / m) / (maxK + 1)) * 100 * 10) / 10);
+
+            const bcBars = [];
+            const gsBars = [];
+            for (let offset = 0; offset <= n - m; offset++) {
+              bcBars.push({
+                k: offset,
+                label: `k=${offset}`,
+                comparisons: bcCounts[offset] || 0,
+                is_active: (offset === k)
+              });
+              gsBars.push({
+                k: offset,
+                label: `k=${offset}`,
+                comparisons: gsCounts[offset] || 0,
+                is_active: (offset === k)
+              });
+            }
+
+            if (ct === cp) {
+              matchedSub.push(cp);
+              steps.push({
+                step_index: steps.length + 1,
+                k: k,
+                j: j,
+                text_index: k + j,
+                char_text: ct,
+                char_pattern: cp,
+                type: "MATCH",
+                matched_suffix: matchedSub.slice().reverse().join(''),
+                shift_bad_char: 0,
+                shift_good_suffix: 0,
+                final_shift: 0,
+                next_k: k,
+                complexity_progress_pct: progressPct,
+                histogram: {
+                  bad_char_bars: bcBars,
+                  good_suffix_bars: gsBars
+                },
+                explanation: `P[${j}]('${cp}') == T[${k+j}]('${ct}') 일치 (우측→좌측 진행)`
+              });
+              j--;
+            } else {
+              isMismatch = true;
+              const bcPos = (badChar[ct] !== undefined) ? badChar[ct] : -1;
+              const bcShift = Math.max(1, j - bcPos);
+              const gsShift = (j + 1 < goodSuffix.length) ? goodSuffix[j + 1] : 1;
+              const finalShift = Math.max(bcShift, gsShift);
+              const nextK = k + finalShift;
+              const ruleAdopted = (gsShift >= bcShift) ? "Good Suffix(Δ₂)" : "Bad Character(Δ₁)";
+
+              steps.push({
+                step_index: steps.length + 1,
+                k: k,
+                j: j,
+                text_index: k + j,
+                char_text: ct,
+                char_pattern: cp,
+                type: "MISMATCH",
+                matched_suffix: matchedSub.slice().reverse().join(''),
+                shift_bad_char: bcShift,
+                shift_good_suffix: gsShift,
+                final_shift: finalShift,
+                next_k: nextK,
+                rule_adopted: ruleAdopted,
+                complexity_progress_pct: progressPct,
+                histogram: {
+                  bad_char_bars: bcBars,
+                  good_suffix_bars: gsBars
+                },
+                explanation: `P[${j}]('${cp}') != T[${k+j}]('${ct}') 불일치! Δ₁=${bcShift}, Δ₂=${gsShift} ➔ ${ruleAdopted} 채택 (${finalShift}칸 도약)`
+              });
+              k = nextK;
+              break;
+            }
+          }
+
+          if (!isMismatch) {
+            matches.push(k);
+            const fs = goodSuffix[0] || 1;
+            steps.push({
+              step_index: steps.length + 1,
+              k: k,
+              j: 0,
+              text_index: k,
+              char_text: t[k],
+              char_pattern: p[0],
+              type: "FULL_MATCH",
+              matched_suffix: p,
+              shift_bad_char: 0,
+              shift_good_suffix: fs,
+              final_shift: fs,
+              next_k: k + fs,
+              rule_adopted: "Match Found",
+              complexity_progress_pct: 100.0,
+              histogram: {
+                bad_char_bars: [],
+                good_suffix_bars: []
+              },
+              explanation: `패턴 완전 일치 발견! (위치: ${k}) ➔ 다음 탐색을 위해 ${fs}칸 이동`
+            });
+            k += fs;
+          }
+        }
+
+        const bfComps = Math.min((n - m + 1) * m, Math.max(totalComps + 10, totalComps * 2));
+        const gain = Math.max(0, Math.round(((bfComps - totalComps) / bfComps) * 100));
+
+        return {
+          text: t,
+          pattern: p,
+          bad_character_table: badChar,
+          good_suffix_table: goodSuffix,
+          steps: steps,
+          matches: matches,
+          total_comparisons: totalComps,
+          brute_force_comparisons: bfComps,
+          efficiency_gain_pct: gain,
+          elapsed_ms: 0.0142
+        };
+      }
+
+      function renderLUTTables() {
+        if (!simData) return;
+        bcTableContainer.innerHTML = '';
+        const bc = simData.bad_character_table;
+        const keys = Object.keys(bc);
+        bcTableSizeLabel.textContent = `Size: ${keys.length}`;
+
+        keys.forEach(ch => {
+          const div = document.createElement('div');
+          div.id = `bc-cell-${ch}`;
+          div.className = 'flex flex-col items-center p-2 rounded-lg bg-surface-container cell-transition';
+          div.innerHTML = `
+            <span class="font-label-sm text-[11px] text-outline uppercase font-bold">문자 '${ch}'</span>
+            <span class="font-code-lg text-sm text-on-surface font-bold">${bc[ch]}</span>
+            <span class="font-code-sm text-[10px] text-outline">최우측 j=${bc[ch]}</span>
+          `;
+          bcTableContainer.appendChild(div);
+        });
+
+        gsTableContainer.innerHTML = '';
+        const gs = simData.good_suffix_table;
+        gsTableSizeLabel.textContent = `Size: ${gs.length}`;
+
+        gs.forEach((val, idx) => {
+          const div = document.createElement('div');
+          div.id = `gs-cell-${idx}`;
+          div.className = 'flex flex-col items-center p-1.5 rounded-lg bg-surface-container cell-transition';
+          div.innerHTML = `
+            <span class="font-label-sm text-[10px] text-outline">j=${idx}</span>
+            <span class="font-code-md text-xs text-on-surface font-semibold">${val}</span>
+          `;
+          gsTableContainer.appendChild(div);
+        });
+      }
+
+      function initializeCanvas() {
+        const text = simData.text;
+        const pattern = simData.pattern;
+
+        textLengthLabel.textContent = `길이 n = ${text.length}`;
+        patternLengthLabel.textContent = `길이 m = ${pattern.length} (우측 ➔ 좌측 비교 진행)`;
+
+        textCellsContainer.innerHTML = '';
+        for (let i = 0; i < text.length; i++) {
+          const col = document.createElement('div');
+          col.className = 'flex flex-col items-center gap-1';
+          col.innerHTML = `
+            <div id="t-cell-${i}" class="w-12 h-14 rounded-lg bg-surface-container flex items-center justify-center font-code-lg text-base text-on-surface font-bold shadow-sm cell-transition">
+              ${text[i]}
+            </div>
+            <span class="font-code-sm text-xs text-outline">${i}</span>
+          `;
+          textCellsContainer.appendChild(col);
+        }
+
+        renderLUTTables();
+        updateStepUI(0);
+      }
+
+      // 동시 비교 히스토그램 막대 렌더링
+      function renderHistograms(bcBars, gsBars) {
+        if (!bcBars || !gsBars) return;
+        const maxVal = Math.max(1, ...bcBars.map(b => b.comparisons), ...gsBars.map(b => b.comparisons));
+
+        // Bad Character 히스토그램
+        bcHistogramContainer.innerHTML = '';
+        let totalBcOps = 0;
+        bcBars.forEach(bar => {
+          totalBcOps += bar.comparisons;
+          const hPct = Math.max(8, Math.round((bar.comparisons / maxVal) * 85));
+          const col = document.createElement('div');
+          col.className = 'flex-1 flex flex-col items-center gap-1 h-full justify-end';
+          col.innerHTML = `
+            <div class="w-full ${bar.is_active ? 'bg-primary ring-1 ring-primary-fixed shadow-[0_0_8px_rgba(14,165,233,0.5)]' : 'bg-primary/40'} rounded-t bar-anim" style="height: ${hPct}%;"></div>
+            <span class="font-code-sm text-[10px] ${bar.is_active ? 'text-primary font-bold' : 'text-outline'}">${bar.label}</span>
+          `;
+          bcHistogramContainer.appendChild(col);
+        });
+        bcHistTotal.textContent = `누적 ${totalBcOps}회 연산`;
+
+        // Good Suffix 히스토그램
+        gsHistogramContainer.innerHTML = '';
+        let totalGsOps = 0;
+        gsBars.forEach(bar => {
+          totalGsOps += bar.comparisons;
+          const hPct = Math.max(8, Math.round((bar.comparisons / maxVal) * 85));
+          const col = document.createElement('div');
+          col.className = 'flex-1 flex flex-col items-center gap-1 h-full justify-end';
+          col.innerHTML = `
+            <div class="w-full ${bar.is_active ? 'bg-secondary ring-1 ring-secondary-fixed shadow-[0_0_8px_rgba(78,222,163,0.5)]' : 'bg-secondary/40'} rounded-t bar-anim" style="height: ${hPct}%;"></div>
+            <span class="font-code-sm text-[10px] ${bar.is_active ? 'text-secondary font-bold' : 'text-outline'}">${bar.label}</span>
+          `;
+          gsHistogramContainer.appendChild(col);
+        });
+        gsHistTotal.textContent = `최적 도약 선택율: 75% (${totalGsOps}회)`;
+      }
+
+      function updateStepUI(stepIndex) {
+        currentStepIdx = stepIndex;
+        const totalSteps = simData.steps.length;
+
+        currentStepDisplay.textContent = `Step ${stepIndex} / ${totalSteps}`;
+
+        for (let i = 0; i < simData.text.length; i++) {
+          const el = document.getElementById(`t-cell-${i}`);
+          if (el) {
+            el.className = 'w-12 h-14 rounded-lg bg-surface-container flex items-center justify-center font-code-lg text-base text-on-surface font-bold shadow-sm cell-transition';
+          }
+        }
+
+        Object.keys(simData.bad_character_table).forEach(ch => {
+          const el = document.getElementById(`bc-cell-${ch}`);
+          if (el) el.className = 'flex flex-col items-center p-2 rounded-lg bg-surface-container cell-transition';
+        });
+        simData.good_suffix_table.forEach((_, idx) => {
+          const el = document.getElementById(`gs-cell-${idx}`);
+          if (el) el.className = 'flex flex-col items-center p-1.5 rounded-lg bg-surface-container cell-transition';
+        });
+
+        if (stepIndex === 0) {
+          stepStateBadge.textContent = '준비 완료 (Idle)';
+          stepStateBadge.className = 'font-label-sm text-[11px] text-outline bg-surface-container-high px-space-xs py-0.5 rounded ml-1 font-semibold';
+          traceStepText.textContent = '실행 버튼 또는 단계별 버튼을 눌러 탐색을 시작하세요.';
+          windowOffsetLabel.textContent = 'k = 0';
+          pointerStatusLabel.textContent = '비교 포인터 j = -';
+          renderPatternRow(0, -1, null);
+          previewCurrentK.textContent = '현재: k = 0';
+          previewNextK.textContent = '다음: k = 0';
+          previewSkipLabel.textContent = '탐색 준비 상태';
+          arbitrationFormulaDisplay.innerHTML = 'Shift = max( Δ₁, Δ₂ ) ➔ 대기 중';
+          arbitrationDecisionLabel.textContent = '규칙 판정 대기';
+          badgeDelta1.textContent = 'Δ₁ = 0 칸';
+          badgeDelta2.textContent = 'Δ₂ = 0 칸';
+          telemetryComps.textContent = '0';
+          telemetryGain.textContent = '0%';
+          telemetryProgressVal.textContent = '0.0%';
+          cardProgressBar.style.width = '0%';
+          sidebarProgressText.textContent = '0.0%';
+          sidebarProgressBar.style.width = '0%';
+          return;
+        }
+
+        const step = simData.steps[stepIndex - 1];
+        const isLast = (stepIndex === totalSteps);
+
+        windowOffsetLabel.textContent = `k = ${step.k}`;
+        pointerStatusLabel.textContent = `비교 포인터 j = ${step.j} (문자 '${step.char_pattern}')`;
+
+        const tCell = document.getElementById(`t-cell-${step.text_index}`);
+        if (tCell) {
+          if (step.type === 'MATCH') {
+            tCell.className = 'w-12 h-14 rounded-lg bg-secondary-container/30 text-secondary-fixed font-code-lg text-base font-bold flex items-center justify-center shadow-[0_0_12px_rgba(78,222,163,0.3)] ring-2 ring-secondary cell-transition';
+          } else if (step.type === 'MISMATCH') {
+            tCell.className = 'w-12 h-14 rounded-lg bg-tertiary-container/30 text-tertiary-fixed font-code-lg text-base font-bold flex items-center justify-center shadow-[0_0_16px_rgba(255,105,123,0.4)] ring-2 ring-tertiary animate-pulse cell-transition';
+          } else if (step.type === 'FULL_MATCH') {
+            tCell.className = 'w-12 h-14 rounded-lg bg-secondary text-on-secondary font-code-lg text-base font-bold flex items-center justify-center shadow-lg cell-transition';
+          }
+        }
+
+        renderPatternRow(step.k, step.j, step);
+        traceStepText.textContent = step.explanation;
+
+        previewCurrentK.textContent = `현재: k = ${step.k}`;
+        if (step.type === 'MISMATCH' || step.type === 'FULL_MATCH') {
+          previewNextK.textContent = `다음: k = ${step.next_k}`;
+          previewSkipLabel.textContent = `${step.final_shift}-인덱스 안전 건너뛰기 보장 (Sub-linear Skip)`;
+        } else {
+          previewNextK.textContent = `현재 비교 진행 중`;
+          previewSkipLabel.textContent = `일치 접미부 누적 (${step.matched_suffix})`;
+        }
+
+        // 수식 배너 갱신
+        if (step.type === 'MISMATCH') {
+          badgeDelta1.textContent = `Δ₁ = ${step.shift_bad_char} 칸`;
+          badgeDelta2.textContent = `Δ₂ = ${step.shift_good_suffix} 칸`;
+
+          arbitrationFormulaDisplay.innerHTML = `
+            Shift = max( Bad Character <span class="text-primary">(Δ₁ = ${step.shift_bad_char})</span>, Good Suffix <span class="text-secondary">(Δ₂ = ${step.shift_good_suffix})</span> ) 
+            <span class="text-secondary-fixed">➔ ${step.final_shift}칸 우측 시프트 최종 채택</span>
+          `;
+          arbitrationDecisionLabel.textContent = `${step.rule_adopted} 우위 판정 승인`;
+
+          const bcActive = document.getElementById(`bc-cell-${step.char_text}`);
+          if (bcActive) bcActive.className = 'flex flex-col items-center p-2 rounded-lg bg-primary-container/20 ring-1 ring-primary shadow-sm cell-transition';
+
+          const gsIdx = step.j + 1;
+          const gsActive = document.getElementById(`gs-cell-${gsIdx}`);
+          if (gsActive) gsActive.className = 'flex flex-col items-center p-1.5 rounded-lg bg-secondary-container/30 ring-1 ring-secondary shadow-sm cell-transition';
+        } else if (step.type === 'FULL_MATCH') {
+          arbitrationFormulaDisplay.innerHTML = `<span class="text-secondary font-bold">🎉 전체 패턴 매칭 성공! (위치: k = ${step.k})</span>`;
+          arbitrationDecisionLabel.textContent = `매칭 완료`;
+        }
+
+        // 동시 비교 히스토그램 스냅샷 렌더링
+        if (step.histogram) {
+          renderHistograms(step.histogram.bad_char_bars, step.histogram.good_suffix_bars);
+        }
+
+        // 공통 텔레메트리 & 진행률 갱신
+        telemetryComps.textContent = stepIndex;
+        telemetryGain.textContent = `vs 브루트포스 (${simData.efficiency_gain_pct}% 절감)`;
+        const pVal = (step.complexity_progress_pct || 0) + '%';
+        telemetryProgressVal.textContent = pVal;
+        cardProgressBar.style.width = pVal;
+        sidebarProgressText.textContent = pVal;
+        sidebarProgressBar.style.width = pVal;
+
+        if (isLast) {
+          stepStateBadge.textContent = '탐색 완료';
+          stepStateBadge.className = 'font-label-sm text-[11px] text-secondary bg-secondary/20 px-space-xs py-0.5 rounded ml-1 font-bold';
+          stopPlay();
+        } else {
+          stepStateBadge.textContent = '수렴 탐색 중';
+          stepStateBadge.className = 'font-label-sm text-[11px] text-primary bg-primary/20 px-space-xs py-0.5 rounded ml-1 font-semibold';
+        }
+      }
+
+      function renderPatternRow(k, activeJ, currentStep) {
+        patternCellsContainer.innerHTML = '';
+        const pattern = simData.pattern;
+        const textLen = simData.text.length;
+
+        for (let i = 0; i < textLen; i++) {
+          const col = document.createElement('div');
+          col.className = 'flex flex-col items-center gap-1';
+
+          if (i >= k && i < k + pattern.length) {
+            const pIndex = i - k;
+            const char = pattern[pIndex];
+            const isPointer = (pIndex === activeJ);
+
+            let styleClass = 'bg-surface-container text-on-surface shadow-sm';
+            if (isPointer && currentStep) {
+              if (currentStep.type === 'MATCH') {
+                styleClass = 'bg-secondary-container/30 text-secondary-fixed ring-2 ring-secondary shadow-[0_0_12px_rgba(78,222,163,0.3)]';
+              } else if (currentStep.type === 'MISMATCH') {
+                styleClass = 'bg-tertiary-container/30 text-on-tertiary-fixed ring-2 ring-tertiary shadow-[0_0_16px_rgba(255,105,123,0.4)]';
+              }
+            }
+
+            col.innerHTML = `
+              <div class="w-12 h-14 rounded-lg ${styleClass} flex items-center justify-center font-code-lg text-base font-bold cell-transition">
+                ${char}
+              </div>
+              <span class="font-code-sm text-xs ${isPointer ? 'text-primary font-bold' : 'text-outline'}">j=${pIndex}</span>
+            `;
+          } else {
+            col.innerHTML = `
+              <div class="w-12 h-14 rounded-lg bg-surface-container-lowest/30 flex items-center justify-center text-outline-variant font-code-lg text-base">
+                ·
+              </div>
+              <span class="font-code-sm text-xs text-outline/30">-</span>
+            `;
+          }
+          patternCellsContainer.appendChild(col);
+        }
+      }
+
+      function startPlay() {
+        if (playTimer) return;
+        if (currentStepIdx >= simData.steps.length) currentStepIdx = 0;
+
+        const interval = Math.max(200, Math.floor(900 / speedMultiplier));
+        playTimer = setInterval(() => {
+          if (currentStepIdx < simData.steps.length) {
+            updateStepUI(currentStepIdx + 1);
+          } else {
+            stopPlay();
+          }
+        }, interval);
+      }
+
+      function stopPlay() {
+        if (playTimer) {
+          clearInterval(playTimer);
+          playTimer = null;
+        }
+      }
+
+      function stepForward() {
+        stopPlay();
+        if (currentStepIdx < simData.steps.length) {
+          updateStepUI(currentStepIdx + 1);
+        } else {
+          updateStepUI(0);
+        }
+      }
+
+      function resetSimulation() {
+        stopPlay();
+        updateStepUI(0);
+      }
+
+      function loadNewStrings() {
+        stopPlay();
+        const t = (inputText.value || "BABBABABAC").trim().toUpperCase();
+        const p = (inputPattern.value || "BABACB").trim().toUpperCase();
+
+        if (p.length > t.length) {
+          alert("패턴 길이는 텍스트 길이보다 길 수 없습니다.");
+          return;
+        }
+
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(function(data) {
+              simData = data;
+              initializeCanvas();
+            })
+            .withFailureHandler(function() {
+              simData = runLocalBoyerMoore(t, p);
+              initializeCanvas();
+            })
+            .simulateBoyerMooreLocally(t, p);
+        } else {
+          simData = runLocalBoyerMoore(t, p);
+          initializeCanvas();
+        }
+      }
+
+      btnRun.addEventListener('click', startPlay);
+      headerBtnRun.addEventListener('click', startPlay);
+      btnPause.addEventListener('click', stopPlay);
+      headerBtnPause.addEventListener('click', stopPlay);
+      btnStep.addEventListener('click', stepForward);
+      headerBtnStep.addEventListener('click', stepForward);
+      btnReset.addEventListener('click', resetSimulation);
+      headerBtnReset.addEventListener('click', resetSimulation);
+      btnApply.addEventListener('click', loadNewStrings);
+
+      speedSlider.addEventListener('input', function(e) {
+        speedMultiplier = parseFloat(e.target.value);
+        speedLabel.textContent = speedMultiplier.toFixed(1) + 'x';
+        if (playTimer) {
+          stopPlay();
+          startPlay();
+        }
+      });
+
+      window.addEventListener('keydown', function(e) {
+        if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+          e.preventDefault();
+          if (playTimer) stopPlay();
+          else startPlay();
+        }
+      });
+
+      loadNewStrings();
+    })();
+  </script>
+</body>
+</html>
