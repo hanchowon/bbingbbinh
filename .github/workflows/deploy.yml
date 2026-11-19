@@ -1,4 +1,4 @@
-name: Deploy Backend Server to Cloud Run
+name: Deploy to Cloud Run
 
 on:
   push:
@@ -6,18 +6,22 @@ on:
       - main
     paths:
       - 'server/**'
-      - '.github/workflows/deploy-server.yml'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 env:
   PROJECT_ID: jjjjj-511001
   SERVICE_NAME: bbingbbinh-git
-  REGION: us-central1
+  REGION: us-central1 # Google Cloud Run target region
 
 jobs:
   deploy:
     name: Build & Deploy to Cloud Run
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout Code
